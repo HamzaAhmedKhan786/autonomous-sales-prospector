@@ -1,6 +1,6 @@
 # Autonomous Sales Prospector
 
-A local-first AI SDR research assistant. Given a LinkedIn profile URL, it enriches the prospect through a compliant data provider, searches recent company news with Tavily, and uses OpenAI to produce an evidence-backed outreach draft for human review.
+A local-first AI SDR research assistant. Given a LinkedIn profile URL, it enriches the prospect through a compliant data provider, searches recent company news with Tavily, and uses Groq through its OpenAI-compatible API to produce an evidence-backed outreach draft for human review.
 
 The MVP never sends email automatically.
 
@@ -31,7 +31,7 @@ Email and CRM operations remain disabled until the corresponding server-side cre
 ## Tech stack
 
 - Next.js and TypeScript for the web application and server API
-- OpenAI Responses API with structured JSON output
+- Groq's OpenAI-compatible Responses API with structured JSON output
 - Tavily Search API for current company news
 - A replaceable, compliant profile enrichment provider
 - Zod for runtime validation
@@ -53,8 +53,9 @@ Open the localhost URL printed by Next.js, usually `http://localhost:3000`.
 Set these values in `.env.local`:
 
 ```env
-OPENAI_API_KEY=your_key
-OPENAI_MODEL=gpt-5.6-luna
+GROQ_API_KEY=your_key
+GROQ_MODEL=openai/gpt-oss-120b
+GROQ_BASE_URL=https://api.groq.com/openai/v1
 TAVILY_API_KEY=your_key
 PROFILE_API_URL=https://your-provider.example/profile
 PROFILE_API_KEY=your_key
@@ -65,6 +66,9 @@ EMAIL_API_KEY=your_resend_compatible_key
 EMAIL_API_URL=https://api.resend.com/emails
 HUBSPOT_ACCESS_TOKEN=your_private_app_token
 APP_URL=http://localhost:3000
+CRM_API_URL=http://localhost:4100
+CRM_ORGANIZATION_ID=your_crm_organization_uuid
+ASP_SHARED_SECRET=the_same_secret_configured_in_crm
 ```
 
 API keys are server-side and must never be exposed through `NEXT_PUBLIC_` variables or committed to Git.
@@ -115,6 +119,16 @@ The route runs profile enrichment, Tavily research, evidence validation, and Ope
 npm run lint
 npm run build
 ```
+
+## Production documentation
+
+- [Prospecting and ASP-to-CRM flow](docs/flow.md)
+- [Deployment and operations](docs/production.md)
+- [Configuration reference](docs/configuration.md)
+- [Security and privacy runbook](docs/security-privacy.md)
+- [Production owner checklist](docs/owner-checklist.md)
+
+The owner checklist is the launch gate. The current SQLite deployment supports one production replica; migrate persistence to PostgreSQL before horizontal scaling.
 
 ## Deployment later
 

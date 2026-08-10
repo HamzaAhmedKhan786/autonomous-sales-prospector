@@ -1,7 +1,10 @@
+.git
+.github
+.env*
+!.env.example
 node_modules
 .next
-.git
+coverage
+npm-debug.log*
+docs
 data
-.env*
-work
-outputs
