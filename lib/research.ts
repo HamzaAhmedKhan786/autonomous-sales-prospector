@@ -59,8 +59,11 @@ export async function researchProspect(linkedinUrl: string, context: SenderConte
   const profile = await fetchProfile(linkedinUrl, fetcher);
   const sources = await searchCompanyNews(profile.currentCompany, fetcher);
   if (!sources.length) throw new Error("No recent, credible company signal was found.");
-  const client = dependencies.openai || new OpenAI({ apiKey: requireEnv("OPENAI_API_KEY") });
-  const model = process.env.OPENAI_MODEL || "gpt-5.6-luna";
+  const client = dependencies.openai || new OpenAI({
+        apiKey: requireEnv("GROQ_API_KEY"),
+        baseURL: process.env.GROQ_BASE_URL || "https://api.groq.com/openai/v1"
+      });
+  const model = process.env.GROQ_MODEL || "openai/gpt-oss-120b";
   const response = await retry(() => client.responses.create({
     model,
     instructions: "You are a careful B2B sales researcher. Use only supplied evidence. Select one timely signal. Connect it specifically to the sender's offer without inventing claims. Write a concise email under 130 words. Avoid flattery, hype, and generic openings. Use a low-pressure CTA. Return JSON matching the schema.",
