@@ -4,6 +4,12 @@ A local-first AI SDR research assistant. Given a LinkedIn profile URL, it enrich
 
 The MVP never sends email automatically.
 
+## Product workflow
+
+Autonomous Sales Prospector v1.0.0 is the research entry point: collect a profile, find current evidence, generate a grounded draft, review it, then explicitly synchronize it to Orbit CRM. Orbit CRM owns the continuing account, contact, lead, pipeline, consent, approvals, sequences, and agent orchestration. The in-app **How it works** and **Complaints & issues** pages explain and support this workflow.
+
+ASP is proprietary software of HSK-Group. See [LICENSE.md](LICENSE.md).
+
 ## MVP scope
 
 1. Accept one LinkedIn profile URL.

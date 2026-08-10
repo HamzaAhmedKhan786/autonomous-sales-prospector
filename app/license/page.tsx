@@ -1,0 +1,2 @@
+import Link from "next/link";
+export default function License() { return <main className="info-page"><section className="info-card"><h1>HSK-Group Proprietary License</h1><p>Copyright © 2026 HSK-Group. All rights reserved.</p><p>Autonomous Sales Prospector is a proprietary product of HSK-Group. Copying, modification, distribution, sublicensing, resale, third-party hosting, or derivative works require prior written authorization from HSK-Group.</p><p>Third-party dependencies remain subject to their respective licenses.</p><Link href="/">Return to ASP</Link></section></main>; }

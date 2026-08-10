@@ -35,6 +35,7 @@ function migrate(sql: DatabaseSync) {
     CREATE TABLE IF NOT EXISTS audit_logs (id TEXT PRIMARY KEY, workspace_id TEXT, user_id TEXT, action TEXT NOT NULL, entity_type TEXT NOT NULL, entity_id TEXT, metadata TEXT NOT NULL DEFAULT '{}', ip_hash TEXT, created_at TEXT NOT NULL);
     CREATE TABLE IF NOT EXISTS usage_daily (workspace_id TEXT NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE, day TEXT NOT NULL, research_requests INTEGER NOT NULL DEFAULT 0, provider_calls INTEGER NOT NULL DEFAULT 0, emails_sent INTEGER NOT NULL DEFAULT 0, input_tokens INTEGER NOT NULL DEFAULT 0, output_tokens INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(workspace_id, day));
     CREATE TABLE IF NOT EXISTS rate_limits (key TEXT PRIMARY KEY, count INTEGER NOT NULL, window_start INTEGER NOT NULL);
+    CREATE TABLE IF NOT EXISTS support_issues (id TEXT PRIMARY KEY, workspace_id TEXT NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE, user_id TEXT REFERENCES users(id) ON DELETE SET NULL, category TEXT NOT NULL, subject TEXT NOT NULL, description TEXT NOT NULL, severity TEXT NOT NULL DEFAULT 'normal', status TEXT NOT NULL DEFAULT 'open', app_version TEXT NOT NULL, page_url TEXT, created_at TEXT NOT NULL);
     CREATE INDEX IF NOT EXISTS idx_prospects_workspace_created ON prospects(workspace_id, created_at DESC);
     CREATE INDEX IF NOT EXISTS idx_runs_prospect ON research_runs(prospect_id, created_at DESC);
     CREATE INDEX IF NOT EXISTS idx_audit_workspace ON audit_logs(workspace_id, created_at DESC);
