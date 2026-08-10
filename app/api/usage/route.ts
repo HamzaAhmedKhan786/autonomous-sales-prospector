@@ -1,0 +1,2 @@
+import { NextResponse } from "next/server";import { requireSession } from "../../../lib/auth";import { db } from "../../../lib/db";
+export async function GET(){try{const s=await requireSession();return NextResponse.json({daily:db().prepare("SELECT * FROM usage_daily WHERE workspace_id=? ORDER BY day DESC LIMIT 90").all(s.workspaceId)});}catch{return NextResponse.json({error:"Authentication required."},{status:401});}}

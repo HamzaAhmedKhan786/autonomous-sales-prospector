@@ -1,0 +1,2 @@
+import { NextResponse } from "next/server";import { requireSession } from "../../../lib/auth";import { db } from "../../../lib/db";
+export async function GET(){try{const s=await requireSession();if(s.role==="member")return NextResponse.json({error:"Admin access required."},{status:403});return NextResponse.json({events:db().prepare("SELECT * FROM audit_logs WHERE workspace_id=? ORDER BY created_at DESC LIMIT 500").all(s.workspaceId)});}catch{return NextResponse.json({error:"Authentication required."},{status:401});}}

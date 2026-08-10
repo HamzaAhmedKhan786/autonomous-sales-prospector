@@ -1,5 +1,6 @@
 "use client";
 import { FormEvent, useMemo, useState } from "react";
+import { WorkspaceTools } from "./workspace-tools";
 
 type Result = { prospect: { name: string; role: string; company: string; location: string }; signal: { summary: string; relevance: string; sourceTitle: string; sourceUrl: string; publishedDate?: string }; draft: { subject: string; email: string } };
 const stages = ["Profile", "Company", "Signals", "Draft"];
@@ -37,6 +38,7 @@ export function ProspectWorkspace() {
   const wordCount = result?.draft.email.trim().split(/\s+/).length ?? 0;
   return <main>
     <nav className="nav shell"><a className="brand" href="#top" aria-label="Autonomous Sales Prospector home"><span className="brand-mark">A</span> Autonomous Sales Prospector</a><span className="pilot-badge"><i /> Local MVP</span></nav>
+    <WorkspaceTools />
     <section className="hero shell" id="top"><div className="eyebrow">AI prospect research, grounded in evidence</div><h1>Turn a profile into a reason<br />to start a conversation.</h1><p className="hero-copy">Research the person, find a current company signal, and create a review-ready outreach draft. Nothing is sent automatically.</p>
       <form className="search-card" onSubmit={runResearch}><label htmlFor="prospect-url">Prospect LinkedIn URL</label><div className="search-row"><div className="url-field"><span>in</span><input id="prospect-url" value={url} onChange={(event) => setUrl(event.target.value)} placeholder="https://linkedin.com/in/prospect" aria-describedby="url-help" /></div><button type="submit" disabled={!validUrl || status === "running"}>{status === "running" ? "Researching..." : "Research prospect"}<b>→</b></button></div><div className="form-meta" id="url-help"><span>{validUrl ? "Ready to research" : "Enter a valid LinkedIn profile URL"}</span><span>Human review required · Nothing is sent</span></div>{error && <p className="error-message" role="alert">{error}</p>}</form>
     </section>

@@ -1,0 +1,4 @@
+import { NextResponse } from "next/server";
+import { audit, requireSession } from "../../../../lib/auth";
+import { db } from "../../../../lib/db";
+export async function POST(){try{const s=await requireSession();if(s.role==="member")return NextResponse.json({error:"Admin access required."},{status:403});const sql=db();const workspaces=sql.prepare("SELECT id,retention_days FROM workspaces WHERE id=?").all(s.workspaceId) as {id:string;retention_days:number}[];let deleted=0;for(const w of workspaces){const cutoff=new Date(Date.now()-w.retention_days*86400_000).toISOString();deleted+=Number(sql.prepare("DELETE FROM prospects WHERE workspace_id=? AND created_at<?").run(w.id,cutoff).changes);}audit(s.workspaceId,s.userId,"retention.executed","workspace",s.workspaceId,{deleted});return NextResponse.json({deleted});}catch{return NextResponse.json({error:"Authentication required."},{status:401});}}
