@@ -1,0 +1,3 @@
+import { describe,expect,it } from "vitest";
+import { buildCrmPayload } from "../lib/agentic-crm";
+describe("Orbit CRM bridge",()=>{it("maps a researched prospect and evidence to the CRM contract",()=>{const payload=buildCrmPayload({prospectId:"p1",workspaceId:"w1",linkedinUrl:"https://linkedin.com/in/ada",name:"Ada Lovelace",role:"VP Engineering",company:"Analytical Cloud",evidence:[{title:"Launch",url:"https://news.test",summary:"Expanded in Europe"}]},"00000000-0000-0000-0000-000000000001");expect(payload).toMatchObject({firstName:"Ada",lastName:"Lovelace",title:"VP Engineering",company:"Analytical Cloud",score:50});expect(payload.evidence).toHaveLength(1)});});

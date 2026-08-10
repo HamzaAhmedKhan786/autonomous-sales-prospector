@@ -2,7 +2,7 @@
 import { FormEvent, useMemo, useState } from "react";
 import { WorkspaceTools } from "./workspace-tools";
 
-type Result = { prospect: { name: string; role: string; company: string; location: string }; signal: { summary: string; relevance: string; sourceTitle: string; sourceUrl: string; publishedDate?: string }; draft: { subject: string; email: string } };
+type Result = { prospectId:string; prospect: { name: string; role: string; company: string; location: string }; signal: { summary: string; relevance: string; sourceTitle: string; sourceUrl: string; publishedDate?: string }; draft: { subject: string; email: string } };
 const stages = ["Profile", "Company", "Signals", "Draft"];
 
 export function ProspectWorkspace() {
@@ -12,6 +12,8 @@ export function ProspectWorkspace() {
   const [result, setResult] = useState<Result | null>(null);
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
+  const [crmStatus,setCrmStatus]=useState<"idle"|"syncing"|"synced"|"error">("idle");
+  const [crmMessage,setCrmMessage]=useState("");
   const validUrl = useMemo(() => /^https:\/\/(www\.)?linkedin\.com\/in\/[\w-]+\/?$/i.test(url.trim()), [url]);
 
   async function runResearch(event: FormEvent) {
@@ -33,6 +35,7 @@ export function ProspectWorkspace() {
     await navigator.clipboard.writeText(`Subject: ${result.draft.subject}\n\n${result.draft.email}`);
     setCopied(true); window.setTimeout(() => setCopied(false), 1800);
   }
+  async function syncCrm(){if(!result||crmStatus==="syncing")return;setCrmStatus("syncing");setCrmMessage("");try{const response=await fetch("/api/crm/sync",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({prospectId:result.prospectId,provider:"orbit"})});const body=await response.json();if(!response.ok)throw new Error(body.error||"CRM sync failed.");setCrmStatus("synced");setCrmMessage(`Lead ${body.lead_id} is now in Orbit CRM.`)}catch(error){setCrmStatus("error");setCrmMessage(error instanceof Error?error.message:"CRM sync failed.")}}
 
   const initials = result?.prospect.name.split(" ").map((part) => part[0]).slice(0, 2).join("").toUpperCase();
   const wordCount = result?.draft.email.trim().split(/\s+/).length ?? 0;
@@ -44,7 +47,7 @@ export function ProspectWorkspace() {
     </section>
     {(status === "running" || result) && <section className="workspace shell" aria-live="polite"><div className="progress-card"><div className="section-heading"><div><span className="kicker">Research run</span><h2>{status === "running" ? "Building the brief" : "Brief ready for review"}</h2></div><span className={`status ${status}`}>{status === "running" ? "Working" : "Complete"}</span></div><div className="stage-list">{stages.map((item, index) => <div className={`stage ${index < stage || status === "done" ? "complete" : index === stage ? "active" : ""}`} key={item}><span>{index < stage || status === "done" ? "✓" : index + 1}</span><div><b>{item}</b><small>{["Understand the person", "Map company context", "Find a timely reason", "Write without fluff"][index]}</small></div></div>)}</div></div>
       {result && <div className="results-grid"><article className="panel intelligence"><span className="kicker">Prospect intelligence</span><div className="person"><div className="avatar">{initials}</div><div><h2>{result.prospect.name}</h2><p>{result.prospect.role} · {result.prospect.company}</p><small>{result.prospect.location}</small></div></div><div className="signal-card"><div className="signal-label"><span>Fresh signal</span><small>{result.signal.publishedDate || "Recent"}</small></div><p>{result.signal.summary}</p><a href={result.signal.sourceUrl} target="_blank" rel="noreferrer">{result.signal.sourceTitle}</a></div><div className="why"><b>Why this is relevant</b><p>{result.signal.relevance}</p></div></article>
-        <article className="panel draft"><div className="draft-head"><div><span className="kicker">Review-ready draft</span><h2>Personalized outreach</h2></div><button className="copy-button" onClick={copyDraft}>{copied ? "Copied" : "Copy draft"}</button></div><label htmlFor="draft-subject">Subject</label><input id="draft-subject" className="subject" value={result.draft.subject} readOnly /><label htmlFor="draft-email">Email</label><textarea id="draft-email" defaultValue={result.draft.email} /><div className="draft-footer"><span><i /> Evidence-backed</span><span>{wordCount} words</span></div></article></div>}
+        <article className="panel draft"><div className="draft-head"><div><span className="kicker">Review-ready draft</span><h2>Personalized outreach</h2></div><button className="copy-button" onClick={copyDraft}>{copied ? "Copied" : "Copy draft"}</button></div><label htmlFor="draft-subject">Subject</label><input id="draft-subject" className="subject" value={result.draft.subject} readOnly /><label htmlFor="draft-email">Email</label><textarea id="draft-email" defaultValue={result.draft.email} /><div className="draft-footer"><span><i /> Evidence-backed</span><span>{wordCount} words</span></div><div className="crm-sync"><button onClick={syncCrm} disabled={crmStatus==="syncing"||crmStatus==="synced"}>{crmStatus==="syncing"?"Syncing…":crmStatus==="synced"?"Synced to Orbit CRM":"Sync to Orbit CRM"}</button>{crmMessage&&<p className={crmStatus==="error"?"error-message":"notice"}>{crmMessage}</p>}</div></article></div>}
     </section>}
     <section className="principles shell"><div><span>01</span><h3>Evidence first</h3><p>Every hook traces back to a source, so relevance is easy to verify.</p></div><div><span>02</span><h3>No black-box sending</h3><p>You review, edit, and decide what leaves the workspace.</p></div><div><span>03</span><h3>Built for signal, not volume</h3><p>One thoughtful message beats a hundred generic sequences.</p></div></section><footer className="shell"><span>Autonomous Sales Prospector</span><p>Research responsibly. Respect privacy, platform terms, and local outreach laws.</p></footer>
   </main>;
