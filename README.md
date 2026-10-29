@@ -1,10 +1,14 @@
 # Autonomous Sales Prospector
 
-![Autonomous Sales Prospector workflow](docs/screenshots/asp-workflow.png)
+![Autonomous Sales Prospector command center with synthetic workspace data](docs/screenshots/asp-dashboard.png)
 
 A local-first AI SDR research assistant. Given a LinkedIn profile URL, it enriches the prospect through a compliant data provider, searches recent company news with Tavily, and uses Groq through its OpenAI-compatible API to produce an evidence-backed outreach draft for human review.
 
-The MVP never sends email automatically.
+### SIERRA governed assistant
+
+SIERRA uses a LangGraph plan-and-execute workflow, optional JEV TypeSafe decisions for bounded classification, local tenant-scoped aggregation, and an evaluator. JEV is a decision model—not the conversational generator—and raw workspace records are not sent to it. SIERRA can discover and invoke only allow-listed read tools from Orbit's MCP server; sync remains an explicit, authenticated action. See the [AI PRD](docs/PRD.md).
+
+The production safety policy never sends email automatically.
 
 ## Relationship with Orbit CRM
 
@@ -48,7 +52,7 @@ Autonomous Sales Prospector v1.0.0 is the research entry point: collect a profil
 
 ASP is proprietary software of HSK-Group. See [LICENSE.md](LICENSE.md).
 
-## MVP scope
+## Core product scope
 
 1. Accept one LinkedIn profile URL.
 2. Retrieve professional profile data through a configurable provider adapter.
@@ -80,7 +84,7 @@ Email and CRM operations remain disabled until the corresponding server-side cre
 - A replaceable, compliant profile enrichment provider
 - Zod for runtime validation
 
-Development is local. Production hosting will be selected only after the MVP workflow is validated.
+Development runs locally. Production hosting is selected only after the release workflow, security gates, and owner checklist are validated.
 
 ## Local setup
 
@@ -167,6 +171,7 @@ npm run build
 ## Production documentation
 
 - [Prospecting and ASP-to-CRM flow](docs/flow.md)
+- [AI product requirements](docs/PRD.md)
 - [Deployment and operations](docs/production.md)
 - [Configuration reference](docs/configuration.md)
 - [Security and privacy runbook](docs/security-privacy.md)

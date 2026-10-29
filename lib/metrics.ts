@@ -1,0 +1,4 @@
+import {collectDefaultMetrics,Counter,Histogram,Registry} from "prom-client";
+const globalMetrics=globalThis as typeof globalThis&{aspMetrics?:Registry};export const metricsRegistry=globalMetrics.aspMetrics||new Registry();if(!globalMetrics.aspMetrics){collectDefaultMetrics({register:metricsRegistry,prefix:"asp_"});globalMetrics.aspMetrics=metricsRegistry}
+export const assistantRequests=metricsRegistry.getSingleMetric("asp_assistant_requests_total") as Counter<string>||new Counter({name:"asp_assistant_requests_total",help:"SIERRA assistant requests",labelNames:["status"],registers:[metricsRegistry]});
+export const assistantLatency=metricsRegistry.getSingleMetric("asp_assistant_duration_seconds") as Histogram<string>||new Histogram({name:"asp_assistant_duration_seconds",help:"SIERRA assistant duration",labelNames:["status"],buckets:[.05,.1,.25,.5,1,2,5],registers:[metricsRegistry]});

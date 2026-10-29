@@ -2,11 +2,13 @@
 import { FormEvent, useMemo, useState } from "react";
 import Image from "next/image";
 import { WorkspaceTools } from "./workspace-tools";
+import { SierraAssistant } from "./sierra-assistant";
+import { WorkspaceSnapshot, type SnapshotProspect } from "./workspace-snapshot";
 
 type Result = { prospectId:string; prospect: { name: string; role: string; company: string; location: string }; signal: { summary: string; relevance: string; sourceTitle: string; sourceUrl: string; publishedDate?: string }; draft: { subject: string; email: string } };
 const stages = ["Profile", "Company", "Signals", "Draft"];
 
-export function ProspectWorkspace() {
+export function ProspectWorkspace({initialProspects}:{initialProspects:SnapshotProspect[]}) {
   const [url, setUrl] = useState("");
   const [status, setStatus] = useState<"idle" | "running" | "done" | "error">("idle");
   const [stage, setStage] = useState(-1);
@@ -41,8 +43,8 @@ export function ProspectWorkspace() {
   const initials = result?.prospect.name.split(" ").map((part) => part[0]).slice(0, 2).join("").toUpperCase();
   const wordCount = result?.draft.email.trim().split(/\s+/).length ?? 0;
   return <main>
-    <nav className="nav shell"><a className="brand brand-logo" href="#top" aria-label="Autonomous Sales Prospector home"><Image src="/brand/asp-logo.png" alt="Autonomous Sales Prospector" width={842} height={410} priority /></a><div className="nav-actions"><a href="/how-it-works">How it works</a><a href={process.env.NEXT_PUBLIC_CRM_APP_URL || "http://localhost:4100"}>Orbit CRM</a><span className="pilot-badge"><i /> Local MVP</span></div></nav>
-    <WorkspaceTools />
+    <nav className="nav shell"><a className="brand brand-logo" href="#top" aria-label="Autonomous Sales Prospector home"><Image src="/brand/asp-logo.png" alt="Autonomous Sales Prospector" width={842} height={410} priority /></a><div className="nav-actions"><a href="/how-it-works">How it works</a><a href={process.env.NEXT_PUBLIC_CRM_APP_URL || "http://localhost:4100"}>Orbit CRM</a><span className="pilot-badge"><i /> Local development</span></div></nav>
+    <WorkspaceTools /><SierraAssistant /><WorkspaceSnapshot prospects={initialProspects} />
     <section className="hero shell" id="top"><div className="eyebrow">AI prospect research, grounded in evidence</div><h1>Turn a profile into a reason<br />to start a conversation.</h1><p className="hero-copy">Research the person, find a current company signal, and create a review-ready outreach draft. Nothing is sent automatically.</p>
       <form className="search-card" onSubmit={runResearch}><label htmlFor="prospect-url">Prospect LinkedIn URL</label><div className="search-row"><div className="url-field"><span>in</span><input id="prospect-url" value={url} onChange={(event) => setUrl(event.target.value)} placeholder="https://linkedin.com/in/prospect" aria-describedby="url-help" /></div><button type="submit" disabled={!validUrl || status === "running"}>{status === "running" ? "Researching..." : "Research prospect"}<b>→</b></button></div><div className="form-meta" id="url-help"><span>{validUrl ? "Ready to research" : "Enter a valid LinkedIn profile URL"}</span><span>Human review required · Nothing is sent</span></div>{error && <p className="error-message" role="alert">{error}</p>}</form>
     </section>
