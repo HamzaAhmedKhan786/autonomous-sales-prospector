@@ -1,8 +1,46 @@
 # Autonomous Sales Prospector
 
+![Autonomous Sales Prospector workflow](docs/screenshots/asp-workflow.png)
+
 A local-first AI SDR research assistant. Given a LinkedIn profile URL, it enriches the prospect through a compliant data provider, searches recent company news with Tavily, and uses Groq through its OpenAI-compatible API to produce an evidence-backed outreach draft for human review.
 
 The MVP never sends email automatically.
+
+## Relationship with Orbit CRM
+
+```mermaid
+flowchart LR
+  subgraph ASP["ASP · find, research and prepare"]
+    URL["LinkedIn profile"] --> PROFILE["Licensed profile data"]
+    PROFILE --> SIGNAL["Tavily evidence"]
+    SIGNAL --> DRAFT["Groq score + draft"]
+    DRAFT --> REVIEW{"Human review"}
+    HISTORY[("SQLite history")] --- DRAFT
+  end
+  REVIEW -->|"Explicit Sync to Orbit CRM"| BRIDGE["Shared-secret + idempotency bridge"]
+  subgraph CRM["Orbit CRM · manage, qualify and convert"]
+    BRIDGE --> UPSERT["Deduplicate + upsert"]
+    UPSERT --> RECORDS["Account + contact + lead"]
+    RECORDS --> PIPELINE["Qualification + opportunity pipeline"]
+    PIPELINE --> ACTIONS["Activities + sequences + agents"]
+    ACTIONS --> APPROVAL{"Consent + approval"}
+    APPROVAL --> AUDIT["Execution + immutable audit"]
+    PG[("PostgreSQL")] --- RECORDS
+    PG --- AUDIT
+  end
+  AUDIT -. "CRM IDs + sync status" .-> HISTORY
+```
+
+| User intent | Use this product |
+| --- | --- |
+| Find a person, gather current evidence, and draft a first message | ASP |
+| Review previous research and verify whether it reached CRM | ASP history |
+| Own accounts and contacts, qualify leads, and manage pipeline | Orbit CRM |
+| Run governed agents, sequences, approvals, consent, and audits | Orbit CRM |
+
+After a successful transfer, ASP records the CRM provider, synchronization time, and Orbit lead ID. Orbit stores the corresponding account, contact, lead, evidence activities, audit entry, and integration heartbeat.
+
+![Autonomous Sales Prospector sign-in](docs/screenshots/asp-login.png)
 
 ## Product workflow
 
@@ -15,7 +53,7 @@ ASP is proprietary software of HSK-Group. See [LICENSE.md](LICENSE.md).
 1. Accept one LinkedIn profile URL.
 2. Retrieve professional profile data through a configurable provider adapter.
 3. Search company news from the last month with Tavily.
-4. Use the OpenAI Responses API to select a grounded signal and draft a concise email.
+4. Use Groq's OpenAI-compatible Responses API to select a grounded signal and draft a concise email.
 5. Show the selected source, relevance explanation, subject, and editable email.
 6. Require a human to review and copy the result.
 
@@ -117,7 +155,7 @@ This contract keeps the app independent of a specific scraping vendor and allows
 { "linkedinUrl": "https://www.linkedin.com/in/example" }
 ```
 
-The route runs profile enrichment, Tavily research, evidence validation, and OpenAI drafting. It returns `503` when required local configuration is missing, `400` for invalid input, and `502` when an upstream provider fails.
+The route runs profile enrichment, Tavily research, evidence validation, and Groq drafting. It returns `503` when required local configuration is missing, `400` for invalid input, and `502` when an upstream provider fails.
 
 ## Verification
 

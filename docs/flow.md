@@ -2,8 +2,10 @@
 
 ```mermaid
 sequenceDiagram
+  autonumber
   actor Rep
   participant ASP
+  participant History as ASP SQLite
   participant Profile as Licensed profile API
   participant Tavily
   participant Groq
@@ -13,12 +15,27 @@ sequenceDiagram
   ASP->>Tavily: Recent company signals
   ASP->>Groq: Profile + candidate evidence + sender context
   Groq-->>ASP: Structured score and draft
-  ASP->>ASP: Validate citation and persist history
+  ASP->>ASP: Validate schema and citations
+  ASP->>History: Persist prospect, evidence, draft and run
   ASP-->>Rep: Evidence, rationale, editable draft
-  Rep->>ASP: Confirm sync/send
-  ASP->>CRM: Idempotent prospect payload
+  Rep->>ASP: Confirm CRM sync
+  ASP->>CRM: Tenant-scoped idempotent prospect payload
+  CRM->>CRM: Deduplicate + upsert + audit
   CRM-->>ASP: Account/contact/lead IDs
+  ASP->>History: Persist provider, lead ID and synced time
+  ASP-->>Rep: Show synchronized state
 ```
+
+## What appears in each application
+
+| Data | ASP | Orbit CRM |
+| --- | --- | --- |
+| Prospect identity | Research history | Contact |
+| Company | Research result | Account |
+| Evidence and URLs | Evidence panel | Research activities |
+| Outreach copy | Editable draft | Agent/sequence context after review |
+| Sync result | Provider, time, Orbit lead ID | Account/contact/lead IDs and integration heartbeat |
+| Sales lifecycle | Not owned by ASP | Lead, opportunity, pipeline, activities and approvals |
 
 Trust boundaries:
 

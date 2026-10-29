@@ -36,8 +36,10 @@ function migrate(sql: DatabaseSync) {
     CREATE TABLE IF NOT EXISTS usage_daily (workspace_id TEXT NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE, day TEXT NOT NULL, research_requests INTEGER NOT NULL DEFAULT 0, provider_calls INTEGER NOT NULL DEFAULT 0, emails_sent INTEGER NOT NULL DEFAULT 0, input_tokens INTEGER NOT NULL DEFAULT 0, output_tokens INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(workspace_id, day));
     CREATE TABLE IF NOT EXISTS rate_limits (key TEXT PRIMARY KEY, count INTEGER NOT NULL, window_start INTEGER NOT NULL);
     CREATE TABLE IF NOT EXISTS support_issues (id TEXT PRIMARY KEY, workspace_id TEXT NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE, user_id TEXT REFERENCES users(id) ON DELETE SET NULL, category TEXT NOT NULL, subject TEXT NOT NULL, description TEXT NOT NULL, severity TEXT NOT NULL DEFAULT 'normal', status TEXT NOT NULL DEFAULT 'open', app_version TEXT NOT NULL, page_url TEXT, created_at TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS crm_syncs (id TEXT PRIMARY KEY, workspace_id TEXT NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE, prospect_id TEXT NOT NULL REFERENCES prospects(id) ON DELETE CASCADE, provider TEXT NOT NULL, external_account_id TEXT, external_contact_id TEXT, external_lead_id TEXT, status TEXT NOT NULL DEFAULT 'synced', synced_at TEXT NOT NULL, UNIQUE(workspace_id, prospect_id, provider));
     CREATE INDEX IF NOT EXISTS idx_prospects_workspace_created ON prospects(workspace_id, created_at DESC);
     CREATE INDEX IF NOT EXISTS idx_runs_prospect ON research_runs(prospect_id, created_at DESC);
     CREATE INDEX IF NOT EXISTS idx_audit_workspace ON audit_logs(workspace_id, created_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_crm_syncs_prospect ON crm_syncs(workspace_id, prospect_id, synced_at DESC);
   `);
 }
