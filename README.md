@@ -8,6 +8,8 @@ A local-first AI SDR research assistant. Given a LinkedIn profile URL, it enrich
 
 SIERRA uses a LangGraph plan-and-execute workflow, optional JEV TypeSafe decisions for bounded classification, local tenant-scoped aggregation, and an evaluator. JEV is a decision model—not the conversational generator—and raw workspace records are not sent to it. SIERRA can discover and invoke only allow-listed read tools from Orbit's MCP server; sync remains an explicit, authenticated action. See the [AI PRD](docs/PRD.md).
 
+SIERRA's supervisor hands work to research, outreach, history, or CRM-sync specialists. Its RAG layer chunks validated evidence into a workspace-scoped SQLite FTS5 index, retrieves only within the active tenant, returns source URLs, and evaluates citations before responding.
+
 The production safety policy never sends email automatically.
 
 ## Relationship with Orbit CRM
@@ -80,6 +82,7 @@ Email and CRM operations remain disabled until the corresponding server-side cre
 
 - Next.js and TypeScript for the web application and server API
 - Groq's OpenAI-compatible Responses API with structured JSON output
+- Optional loopback-only OpenAI-compatible local LLMs such as Ollama; set `LLM_PROVIDER=local`, `LLM_BASE_URL`, and `LLM_MODEL`. Fine-tuned Groq models are selected through `GROQ_MODEL`.
 - Tavily Search API for current company news
 - A replaceable, compliant profile enrichment provider
 - Zod for runtime validation

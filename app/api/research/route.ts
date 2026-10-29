@@ -5,6 +5,7 @@ import { db } from "../../../lib/db";
 import { ConfigurationError, researchProspect } from "../../../lib/research";
 import { id } from "../../../lib/security";
 import { rateLimit, RateLimitError } from "../../../lib/resilience";
+import { indexWorkspaceEvidence } from "../../../lib/rag";
 
 export const runtime = "nodejs";
 const schema = z.object({ linkedinUrl: z.string().url().refine((url) => { const host=new URL(url).hostname; return host === "linkedin.com" || host.endsWith(".linkedin.com"); }, "A LinkedIn profile URL is required."), force: z.boolean().optional() });
@@ -30,6 +31,7 @@ export async function POST(request: Request) {
       sql.prepare("UPDATE prospects SET name=?,role=?,company=?,location=?,updated_at=? WHERE id=?").run(brief.prospect.name,brief.prospect.role,brief.prospect.company,brief.prospect.location,now,prospectId);
       sql.prepare("UPDATE research_runs SET prospect_id=?,status='complete',source_count=?,model=?,input_tokens=?,output_tokens=?,duration_ms=? WHERE id=?").run(prospectId,brief.usage.sourceCount,brief.usage.model,brief.usage.inputTokens,brief.usage.outputTokens,Date.now()-started,runId);
       const evidenceId=id(); sql.prepare("INSERT INTO evidence VALUES(?,?,?,?,?,?,?,?)").run(evidenceId,runId,brief.signal.sourceTitle,brief.signal.sourceUrl,brief.signal.summary,brief.signal.relevance,brief.signal.publishedDate||null,now);
+      indexWorkspaceEvidence({workspaceId:session.workspaceId,prospectId,title:brief.signal.sourceTitle,sourceUrl:brief.signal.sourceUrl,content:`${brief.signal.summary}\n${brief.signal.relevance}`});
       const draftId=id(); sql.prepare("INSERT INTO drafts(id,workspace_id,prospect_id,research_run_id,subject,body,created_by,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?)").run(draftId,session.workspaceId,prospectId,runId,brief.draft.subject,brief.draft.email,session.userId,now,now);
       sql.prepare("INSERT INTO usage_daily(workspace_id,day,research_requests,provider_calls,input_tokens,output_tokens) VALUES(?,?,1,2,?,?) ON CONFLICT(workspace_id,day) DO UPDATE SET research_requests=research_requests+1,provider_calls=provider_calls+2,input_tokens=input_tokens+excluded.input_tokens,output_tokens=output_tokens+excluded.output_tokens").run(session.workspaceId,now.slice(0,10),brief.usage.inputTokens,brief.usage.outputTokens); sql.exec("COMMIT");
       audit(session.workspaceId,session.userId,"research.completed","prospect",prospectId,{runId}); return NextResponse.json({...brief,prospectId,draftId,duplicate:Boolean(existing)});

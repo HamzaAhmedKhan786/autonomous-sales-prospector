@@ -1,5 +1,26 @@
 # Prospecting flow
 
+## SIERRA agent and retrieval flow
+
+```mermaid
+flowchart LR
+  U[User request] --> G[Domain and prompt guard]
+  G --> S[LangGraph supervisor]
+  S --> R[Research specialist]
+  S --> O[Outreach specialist]
+  S --> H[History specialist]
+  S --> C[CRM specialist]
+  R --> K[(Workspace-scoped FTS5 RAG)]
+  O --> K
+  H --> K
+  C --> M[Allow-listed Orbit MCP reads]
+  K --> E[Citation evaluator]
+  M --> E
+  E --> A[SIERRA answer]
+```
+
+Only validated evidence is indexed. Retrieval is scoped to the authenticated workspace and returns source URLs. The evaluator rejects unsupported results before display; CRM writes still require an explicit authenticated sync action.
+
 ```mermaid
 sequenceDiagram
   autonumber

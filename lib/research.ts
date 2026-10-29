@@ -1,4 +1,5 @@
 import OpenAI from "openai";
+import {createLlmClient} from "./llm";
 import { z } from "zod";
 import { retry } from "./resilience";
 
@@ -59,24 +60,16 @@ export async function researchProspect(linkedinUrl: string, context: SenderConte
   const profile = await fetchProfile(linkedinUrl, fetcher);
   const sources = await searchCompanyNews(profile.currentCompany, fetcher);
   if (!sources.length) throw new Error("No recent, credible company signal was found.");
-  const client = dependencies.openai || new OpenAI({
-        apiKey: requireEnv("GROQ_API_KEY"),
-        baseURL: process.env.GROQ_BASE_URL || "https://api.groq.com/openai/v1"
-      });
-  const model = process.env.GROQ_MODEL || "openai/gpt-oss-120b";
-  const response = await retry(() => client.responses.create({
-    model,
-    instructions: "You are a careful B2B sales researcher. Use only supplied evidence. Select one timely signal. Connect it specifically to the sender's offer without inventing claims. Write a concise email under 130 words. Avoid flattery, hype, and generic openings. Use a low-pressure CTA. Return JSON matching the schema.",
-    input: JSON.stringify({ profile, sources, sender: context }),
-    text: { format: { type: "json_schema", name: "prospect_brief", strict: true, schema: outputSchema } },
-  }), { attempts: 2, timeoutMs: 45_000 });
-  const generated = z.object({ signalSummary: z.string(), relevance: z.string(), sourceUrl: z.string().url(), subject: z.string(), email: z.string() }).parse(JSON.parse(response.output_text));
+  let configured:ReturnType<typeof createLlmClient>;try{configured=dependencies.openai?{client:dependencies.openai,provider:"groq" as const,baseURL:"test",apiKey:"test",model:process.env.GROQ_MODEL||"openai/gpt-oss-120b"}:createLlmClient();}catch(error){throw new ConfigurationError(error instanceof Error?error.message:"LLM is not configured.");}
+  const {client,model,provider}=configured;const instructions="You are a careful B2B sales researcher. Use only supplied evidence. Select one timely signal. Connect it specifically to the sender's offer without inventing claims. Write a concise email under 130 words. Avoid flattery, hype, and generic openings. Use a low-pressure CTA. Return JSON matching the schema.";let outputText="",inputTokens=0,outputTokens=0;
+  if(provider==="local"){const response=await retry(()=>client.chat.completions.create({model,messages:[{role:"system",content:instructions},{role:"user",content:JSON.stringify({profile,sources,sender:context})}],response_format:{type:"json_object"}}),{attempts:2,timeoutMs:45_000});outputText=response.choices[0]?.message.content||"";inputTokens=response.usage?.prompt_tokens||0;outputTokens=response.usage?.completion_tokens||0;}else{const response=await retry(() => client.responses.create({model,instructions,input:JSON.stringify({ profile, sources, sender: context }),text: { format: { type: "json_schema", name: "prospect_brief", strict: true, schema: outputSchema } }}), { attempts: 2, timeoutMs: 45_000 });outputText=response.output_text;inputTokens=response.usage?.input_tokens||0;outputTokens=response.usage?.output_tokens||0;}
+  const generated = z.object({ signalSummary: z.string(), relevance: z.string(), sourceUrl: z.string().url(), subject: z.string(), email: z.string() }).parse(JSON.parse(outputText));
   const selectedSource = sources.find((source) => source.url === generated.sourceUrl);
   if (!selectedSource) throw new Error("The generated draft referenced a source outside the research set.");
   return {
     prospect: { name: profile.name, role: profile.currentRole, company: profile.currentCompany, location: profile.location },
     signal: { summary: generated.signalSummary, relevance: generated.relevance, sourceTitle: selectedSource.title, sourceUrl: selectedSource.url, publishedDate: selectedSource.publishedDate },
     draft: { subject: generated.subject, email: generated.email },
-    usage: { inputTokens: response.usage?.input_tokens || 0, outputTokens: response.usage?.output_tokens || 0, sourceCount: sources.length, model },
+    usage: { inputTokens, outputTokens, sourceCount: sources.length, model },
   };
 }
