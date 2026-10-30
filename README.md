@@ -10,6 +10,8 @@ SIERRA uses a LangGraph plan-and-execute workflow, optional JEV TypeSafe decisio
 
 SIERRA's supervisor hands work to research, outreach, history, or CRM-sync specialists. Its RAG layer chunks validated evidence into a workspace-scoped SQLite FTS5 index, retrieves only within the active tenant, returns source URLs, and evaluates citations before responding.
 
+SIERRA's assistant launcher uses an alpha-transparent, high-resolution eight-frame sprite loop for its hand gesture, body rotation, and energy-ring motion. CSS animation avoids GIF color banding and automatically becomes static when the user enables reduced motion.
+
 The production safety policy never sends email automatically.
 
 ## Relationship with Orbit CRM
